@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
@@ -199,7 +201,25 @@ async def finish_murojaat(answer_target: Message, user, state: FSMContext, file_
     await state.clear()
 
 
+def run_dummy_server():
+    """Render 'Web Service' porti ochilishini kutadi — shu soxta server
+    faqat Render'ga 'servis tirik' degan javob berish uchun kerak."""
+    port = int(os.getenv("PORT", 10000))
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Bot ishlab turibdi")
+
+        def log_message(self, format, *args):
+            pass  # ortiqcha loglarni o'chiramiz
+
+    HTTPServer(("0.0.0.0", port), Handler).serve_forever()
+
+
 async def main():
+    threading.Thread(target=run_dummy_server, daemon=True).start()
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
